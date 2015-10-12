@@ -19,6 +19,8 @@ fi
 
 tar xzf "${ENV_PATH}/boost_1_59_0.tar.gz" -C "${ENV_PATH}"
 
+cd ${BOOST_PATH}
+
 ${BOOST_PATH}/bootstrap.sh --prefix=${BOOST_RELEASE_PATH}
 
 ${BOOST_PATH}/b2 -j 32 install
@@ -29,7 +31,7 @@ if [ -d "${MONGO_CXX_PATH}" ]; then
     rm -rf ${MONGO_CXX_PATH}
 fi
 
-MONGO_CXX_RELEASE_PATH="${CURRENT_DIR}/third_party/mongo_cxx"
+MONGO_CXX_RELEASE_PATH="${CURRENT_DIR}/third_party/mongo-cxx"
 if [ -d "${MONGO_CXX_RELEASE_PATH}" ]; then
     rm -rf ${MONGO_CXX_RELEASE_PATH}
 fi
