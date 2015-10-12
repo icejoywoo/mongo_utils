@@ -6,7 +6,7 @@ CURRENT_DIR=$(cd $(dirname ${BASH_SOURCE[0]}); pwd)
 
 ENV_PATH="${CURRENT_DIR}/env"
 
-PARALLEL=4
+PARALLEL=32
 
 cd ${ENV_PATH}
 
@@ -26,7 +26,7 @@ cd ${BOOST_PATH}
 
 ${BOOST_PATH}/bootstrap.sh --prefix=${BOOST_RELEASE_PATH}
 
-${BOOST_PATH}/b2 --build-type=complete --layout=tagged -j ${PARALLEL} link=static threading=multi install
+${BOOST_PATH}/b2 --build-type=complete --layout=tagged -j ${PARALLEL} link=static install
 
 # mongo cxx driver
 MONGO_CXX_PATH="${ENV_PATH}/mongo-cxx-driver-legacy-1.0.5"
