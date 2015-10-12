@@ -1,0 +1,20 @@
+#!/bin/env python
+
+env = Environment(CC = "gcc", CXX = "g++", CXXFLAGS = "-g -O0 -isystem -c")
+
+env.Object(Glob("src/*.cc"), CPPPATH = ['include', '.', '../gtest/include', '../gtest/'])
+
+gmock = env.StaticLibrary(target = 'gmock', 
+                source = ['src/gmock-all.o'] + Glob('../gtest/src/gtest-all.o'), 
+                CPPPATH = ['include', '.', '../gtest/include', '../gtest/'], 
+                LIBS = ['pthread'],
+                LIBPATH = [])
+
+gmock_main = env.StaticLibrary(target = 'gmock_main', 
+                source = ['src/gmock-all.o', 'src/gmock_main.o'] + Glob('../gtest/src/gtest-all.o'), 
+                CPPPATH = ['include', '.', '../gtest/include', '../gtest/'], 
+                LIBS = ['pthread'],
+                LIBPATH = [])
+
+for lib in Glob("*.a"):
+    env.Command('lib/' + lib.name, lib.name, Move("$TARGET", "$SOURCE")) 
