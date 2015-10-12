@@ -1,0 +1,15 @@
+#!/bin/env python
+
+env = Environment(CC = "gcc", CXX = "g++", CXXFLAGS = "-g -O0 -isystem -c")
+
+env.Append(CPPPATH = ['include/gflags', 'src', '.'])
+env.Append(LIBS = ['pthread'])
+env.Append(LIBPATH = [])
+
+env.Object(Glob("src/*.cc"))
+
+gtest = env.StaticLibrary(target = 'gflags',
+                source = Glob('src/*.o'))
+
+for lib in Glob("*.a"):
+    env.Command('lib/' + lib.name, lib.name, Move("$TARGET", "$SOURCE"))
