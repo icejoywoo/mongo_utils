@@ -23,7 +23,7 @@ cd ${BOOST_PATH}
 
 ${BOOST_PATH}/bootstrap.sh --prefix=${BOOST_RELEASE_PATH}
 
-${BOOST_PATH}/b2 -j 32 install
+${BOOST_PATH}/b2 -j 32 link=static threading=multi runtime-link=static install
 
 # mongo cxx driver
 MONGO_CXX_PATH="${ENV_PATH}/mongo-cxx-driver-legacy-1.0.5"
