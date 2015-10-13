@@ -6,11 +6,6 @@
 
 DEFINE_bool(big_menu, true, "Include 'advanced' options in the menu listing");
 
-void run() {
-  mongo::DBClientConnection c;
-  c.connect("localhost");
-}
-
 int main(int argc, char* argv[]) {
     FLAGS_log_dir = "./log";
     gflags::ParseCommandLineFlags(&argc, &argv, true);
@@ -20,7 +15,8 @@ int main(int argc, char* argv[]) {
 
     mongo::client::initialize();
     try {
-        run();
+        mongo::DBClientConnection c;
+        c.connect("localhost");
         std::cout << "connected ok" << std::endl;
         LOG(INFO) << "connected ok";
     } catch( const mongo::DBException &e ) {

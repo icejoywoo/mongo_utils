@@ -26,6 +26,7 @@ env.Append(CPPPATH=['third_party/gtest/include', 'third_party/gmock/include',
                     'third_party/glog/include', 'third_party/gflags/include',
                     'third_party/boost/include', 'third_party/mongo-cxx/include'])
 
-env.Program(target='demo',
-            source=['tools/demo.cpp'])
+for source in Glob('tools/*.cpp'):
+    env.Program(target=''.join(os.path.basename(str(source)).split('.')[:-1]),
+                source=[source])
 
