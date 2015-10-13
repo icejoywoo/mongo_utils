@@ -153,8 +153,11 @@
 #define PACKAGE_VERSION "0.3.4"
 
 /* How to access the PC from a struct ucontext */
+#if defined(MACOSX)
+#define PC_FROM_UCONTEXT uc_mcontext->__ss.__rip
+#else
 #define PC_FROM_UCONTEXT uc_mcontext.gregs[REG_RIP]
-//#define PC_FROM_UCONTEXT uc_mcontext->__ss.__rip
+#endif
 
 /* Define to necessary symbol if this constant uses a non-standard name on
    your system. */

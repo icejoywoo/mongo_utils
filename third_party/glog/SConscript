@@ -1,10 +1,15 @@
 #!/bin/env python
 
+import os
+
 env = Environment(CC = "gcc", CXX = "g++", CXXFLAGS = "-g -O0 -isystem -c")
 
 env.Append(CPPPATH = ['include', 'src', '.'])
 env.Append(LIBS = ['pthread'])
 env.Append(LIBPATH = [])
+
+if os.sys.platform == 'darwin':
+    env.Append(CPPDEFINES=['MACOSX'])
 
 env.Object(Glob("src/*.cc"))
 
