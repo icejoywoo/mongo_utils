@@ -3,10 +3,13 @@
 
 import os
 
+# --implicit-cache
+SetOption('implicit_cache', 1)
+
 # -Wunused-local-typedef 屏蔽mac编译时大量的错误
 env = Environment(CXXFLAGS = "-Wall -g -O0 -Wno-unused-local-typedef")
 
-if os.sys.platform == 'linx':
+if 'linux' in os.sys.platform:
     env.Append(LIBS=['rt'])
 
 env.SConscript(['third_party/gmock/SConscript',
