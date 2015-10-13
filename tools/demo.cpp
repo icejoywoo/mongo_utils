@@ -1,8 +1,11 @@
 #include <cstdlib>
 #include <iostream>
-#include "mongo/client/dbclient.h" // for the driver
+
+#include "boost/smart_ptr.hpp"
 #include "glog/logging.h"
 #include "gflags/gflags.h"
+#include "mongo/bson/bson.h"
+#include "mongo/client/dbclient.h" // for the driver
 
 DEFINE_bool(big_menu, true, "Include 'advanced' options in the menu listing");
 
@@ -19,6 +22,16 @@ int main(int argc, char* argv[]) {
         c.connect("localhost");
         std::cout << "connected ok" << std::endl;
         LOG(INFO) << "connected ok";
+        // insert a doc
+        mongo::BSONObj p = BSON(mongo::GENOID << "name" << "John" << "age" << 24);
+        c.insert("test.persons", p);
+
+        // query
+        std::auto_ptr<mongo::DBClientCursor> cursor = c.query("test.persons", mongo::BSONObj());
+        while (cursor->more()) {
+            std::cout << cursor->next().toString() << std::endl;
+        }
+        std::cout << "test.persons count:" << c.count("test.persons") << std::endl;
     } catch( const mongo::DBException &e ) {
         std::cout << "caught " << e.what() << std::endl;
         LOG(WARNING) << "caught " << e.what();
