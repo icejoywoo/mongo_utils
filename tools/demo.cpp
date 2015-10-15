@@ -7,10 +7,12 @@
 #include "mongo/bson/bson.h"
 #include "mongo/client/dbclient.h" // for the driver
 
+// cmdline: --big_menu makes big_menu is true, and --nobig_menu false.
 DEFINE_bool(big_menu, true, "Include 'advanced' options in the menu listing");
 
 int main(int argc, char* argv[]) {
     FLAGS_log_dir = "./log";
+    gflags::SetVersionString("0.0.0.1 alpha");
     gflags::ParseCommandLineFlags(&argc, &argv, true);
     google::InitGoogleLogging("demo");
 
