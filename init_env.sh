@@ -81,7 +81,7 @@ function build_libevent()
         rm -rf ${LIBEVENT_PATH}
     fi
 
-    LIBEVENT_RELEASE_PATH="${CURRENT_DIR}/third_path/libevent"
+    LIBEVENT_RELEASE_PATH="${CURRENT_DIR}/third_party/libevent"
     if [ -d "${LIBEVENT_RELEASE_PATH}" ]; then
         rm -rf ${LIBEVENT_RELEASE_PATH}
     fi
@@ -89,7 +89,7 @@ function build_libevent()
     tar xzf "${ENV_PATH}/libevent-2.0.22-stable.tar.gz" -C "${ENV_PATH}"
 
     cd ${LIBEVENT_PATH}
-    ./configure --prefix=${LIBEVENT_RELEASE_PATH} --disable-shared --enable-static
+    ./configure --prefix=${LIBEVENT_RELEASE_PATH} --disable-shared --enable-static --disable-openssl
     make -j ${PARALLEL}
     make install
 
