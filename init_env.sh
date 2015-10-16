@@ -10,36 +10,94 @@ PARALLEL=32
 
 cd ${ENV_PATH}
 
-# build boost
-BOOST_PATH="${ENV_PATH}/boost_1_59_0"
-if [ -d "${BOOST_PATH}" ]; then
-    rm -rf ${BOOST_PATH}
-fi
+function build_boost()
+{
+    FLAG="${CURRENT_DIR}/.build_boost"
+    if [ -f "${FLAG}" ]; then
+        echo "boost is already build."
+        return 0
+    fi
 
-BOOST_RELEASE_PATH="${CURRENT_DIR}/third_party/boost"
-if [ -d "${BOOST_RELEASE_PATH}" ]; then
-    rm -rf ${BOOST_RELEASE_PATH}
-fi
-tar xzf "${ENV_PATH}/boost_1_59_0.tar.gz" -C "${ENV_PATH}"
+    # build boost
+    BOOST_PATH="${ENV_PATH}/boost_1_59_0"
+    if [ -d "${BOOST_PATH}" ]; then
+        rm -rf ${BOOST_PATH}
+    fi
 
-cd ${BOOST_PATH}
+    BOOST_RELEASE_PATH="${CURRENT_DIR}/third_party/boost"
+    if [ -d "${BOOST_RELEASE_PATH}" ]; then
+        rm -rf ${BOOST_RELEASE_PATH}
+    fi
+    tar xzf "${ENV_PATH}/boost_1_59_0.tar.gz" -C "${ENV_PATH}"
 
-${BOOST_PATH}/bootstrap.sh --prefix=${BOOST_RELEASE_PATH}
+    cd ${BOOST_PATH}
 
-${BOOST_PATH}/b2 --build-type=complete --layout=tagged -j ${PARALLEL} link=static install
+    ${BOOST_PATH}/bootstrap.sh --prefix=${BOOST_RELEASE_PATH}
 
-# mongo cxx driver
-MONGO_CXX_PATH="${ENV_PATH}/mongo-cxx-driver-legacy-1.0.5"
-if [ -d "${MONGO_CXX_PATH}" ]; then
-    rm -rf ${MONGO_CXX_PATH}
-fi
+    ${BOOST_PATH}/b2 --build-type=complete --layout=tagged -j ${PARALLEL} link=static install
 
-MONGO_CXX_RELEASE_PATH="${CURRENT_DIR}/third_party/mongo-cxx"
-if [ -d "${MONGO_CXX_RELEASE_PATH}" ]; then
-    rm -rf ${MONGO_CXX_RELEASE_PATH}
-fi
+    touch ${FLAG}
+    return 0
+}
 
-tar xzf "${ENV_PATH}/mongo-cxx-driver-legacy-1.0.5.tar.gz" -C "${ENV_PATH}"
+function build_mongo_cxx_driver()
+{
+    FLAG="${CURRENT_DIR}/.build_mongo_cxx_driver"
+    if [ -f "${FLAG}" ]; then
+        echo "mongo_cxx_driver is already build."
+        return 0
+    fi
 
-cd ${MONGO_CXX_PATH}
-scons -j ${PARALLEL} --prefix=${MONGO_CXX_RELEASE_PATH} --dbg=on --opt=on --cpppath=${BOOST_RELEASE_PATH}/include --libpath=${BOOST_RELEASE_PATH}/lib install
+    # mongo cxx driver
+    MONGO_CXX_PATH="${ENV_PATH}/mongo-cxx-driver-legacy-1.0.5"
+    if [ -d "${MONGO_CXX_PATH}" ]; then
+        rm -rf ${MONGO_CXX_PATH}
+    fi
+
+    MONGO_CXX_RELEASE_PATH="${CURRENT_DIR}/third_party/mongo-cxx"
+    if [ -d "${MONGO_CXX_RELEASE_PATH}" ]; then
+        rm -rf ${MONGO_CXX_RELEASE_PATH}
+    fi
+
+    tar xzf "${ENV_PATH}/mongo-cxx-driver-legacy-1.0.5.tar.gz" -C "${ENV_PATH}"
+
+    cd ${MONGO_CXX_PATH}
+    scons -j ${PARALLEL} --prefix=${MONGO_CXX_RELEASE_PATH} --dbg=on --opt=on --cpppath=${BOOST_RELEASE_PATH}/include --libpath=${BOOST_RELEASE_PATH}/lib install
+
+    touch ${FLAG}
+    return 0
+}
+
+function build_libevent()
+{
+    FLAG="${CURRENT_DIR}/.build_libevent"
+    if [ -f "${FLAG}" ]; then
+        echo "libevent is already build."
+        return 0
+    fi
+    # libevent
+    LIBEVENT_PATH="${ENV_PATH}/libevent-2.0.22-stable"
+    if [ -d "${LIBEVENT_PATH}" ]; then
+        rm -rf ${LIBEVENT_PATH}
+    fi
+
+    LIBEVENT_RELEASE_PATH="${CURRENT_DIR}/third_path/libevent"
+    if [ -d "${LIBEVENT_RELEASE_PATH}" ]; then
+        rm -rf ${LIBEVENT_RELEASE_PATH}
+    fi
+
+    tar xzf "${ENV_PATH}/libevent-2.0.22-stable.tar.gz" -C "${ENV_PATH}"
+
+    cd ${LIBEVENT_PATH}
+    ./configure --prefix=${LIBEVENT_RELEASE_PATH} --disable-shared --enable-static
+    make -j ${PARALLEL}
+    make install
+
+    touch ${FLAG}
+    return 0
+}
+
+build_boost
+build_mongo_cxx_driver
+build_libevent
+
