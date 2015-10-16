@@ -29,7 +29,7 @@ env.Append(LIBPATH=['third_party/gtest/lib', 'third_party/gmock/lib',
 env.Append(CPPPATH=['third_party/gtest/include', 'third_party/gmock/include',
                     'third_party/glog/include', 'third_party/gflags/include',
                     'third_party/boost/include', 'third_party/mongo-cxx/include',
-                    'third_party/yaml-cpp-0.5.1/include'])
+                    'third_party/yaml-cpp-0.5.1/include', 'base'])
 
 for source in Glob('tools/*.cpp'):
     env.Program(target=''.join(os.path.basename(str(source)).split('.')[:-1]),
