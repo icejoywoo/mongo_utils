@@ -8,10 +8,9 @@
 #include <string>
 #include <vector>
 
-#include "log_utils.h"
 #include "mutex.h"
 
-namespace replayer {
+namespace base {
 
 /// copy from muduo
 template<typename T>

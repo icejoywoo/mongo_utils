@@ -5,7 +5,7 @@
 
 #include <pthread.h>
 
-namespace replayer {
+namespace base {
 
 /// A simple pthread mutex wrapper
 class MutexLock {
@@ -13,7 +13,7 @@ public:
     MutexLock() {
         pthread_mutexattr_t attr;
         pthread_mutexattr_init(&attr);
-        pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK_NP);
+        //pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK_NP);
         pthread_mutex_init(&m_mutex, &attr);
     }
 
@@ -73,15 +73,6 @@ public:
     void Wait() {
         pthread_cond_wait(&m_cond, m_mutex.GetMutex());
     }
-
-    void Wait(int seconds) {
-		struct timeval now;
-		struct timespec outtime;
-		gettimeofday(&now, NULL);
-		outtime.tv_sec = now.tv_sec + seconds;
-		outtime.tv_nsec = now.tv_usec * 1000;
-		pthread_cond_timedwait(&m_cond, m_mutex.GetMutex(), &outtime);
-	}
 
 	void Notify() {
 		pthread_cond_signal(&m_cond);
