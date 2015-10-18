@@ -1,0 +1,22 @@
+#!/bin/env python
+
+import os
+
+env = Environment(CC="gcc", CXX="g++", CFLAGS=['-g', '-O0', '-isystem', '-c'])
+
+env.Append(CFLAGS=['-Wno-unused-value'])
+
+env.Append(CPPPATH=['include', 'src', '.'])
+env.Append(LIBS=['pthread'])
+env.Append(LIBPATH=[])
+
+env.Object(['src/ev.c', 'src/event.c'])
+
+env.StaticLibrary(target='ev',
+                  source=Glob('src/ev.o'))
+
+env.StaticLibrary(target='event',
+                  source=Glob('src/event.o'))
+
+for lib in Glob("*.a"):
+    env.Command('lib/' + lib.name, lib.name, Move("$TARGET", "$SOURCE"))
