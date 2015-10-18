@@ -86,17 +86,19 @@ int main(int argc, char* argv[]) {
                 std::string shard_mongo = d.getStringField("host");
                 shards[shard_name] = shard_mongo;
             }
+
+            boost::thread_group threads;
             for (std::map<std::string, std::string>::iterator it = shards.begin();
                  it != shards.end(); ++it) {
                 std::string shard_name = it->first;
                 std::string shard_uri = it->second;
 
                 std::cout << "dump " << shard_uri << std::endl;
-                boost::thread t(dump_mongod, shard_uri);
-                t.join();
+                threads.add_thread(new boost::thread(dump_mongod, shard_uri));
             }
 
             boost::thread t(dump_writer);
+            threads.join_all();
         } else {
             std::cout << "mongod" << std::endl;
             boost::thread t(dump_mongod, FLAGS_mongodb);
