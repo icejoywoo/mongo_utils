@@ -10,10 +10,12 @@
 #include <vector>
 
 #include "blocking_queue.h"
+#include "boost/atomic.hpp"
 #include "boost/bind.hpp"
 #include "boost/thread.hpp"
 #include "gflags/gflags.h"
 #include "mongo/bson/bson.h"
+#include "mongo/bson/bsonelement.h"
 #include "mongo/client/dbclient.h" // for the driver
 
 DEFINE_string(mongodb, "localhost:27017", "mongodb uri");
@@ -42,6 +44,7 @@ void dump_mongod(const std::string& mongo_uri) {
     ss << FLAGS_db << '.' << FLAGS_collection;
     std::string ns = ss.str();
 
+    std::cout << "dump " << mongo_uri << std::endl;
     std::auto_ptr<mongo::DBClientCursor> cursor = mongo.query(ns, mongo::BSONObj());
     while (cursor->more()) {
         mongo::BSONObj d = cursor->next();
@@ -49,12 +52,21 @@ void dump_mongod(const std::string& mongo_uri) {
     }
 }
 
-void dump_writer() {
+void dump_writer(int total) {
     std::fstream out(FLAGS_output.c_str(), std::fstream::out | std::fstream::binary);
-    while (true) {
+    std::cout << "dump writer " << std::endl;
+    int counter = 0;
+    int invalid_counter = 0;
+    while (counter < total) {
         mongo::BSONObj d = q.take();
-        out.write(d.objdata(), d.objsize());
+        if (d.isValid()) {
+            out.write(d.objdata(), d.objsize());
+        } else {
+            ++invalid_counter;
+        }
+        ++counter;
     }
+    std::cout << "counter: " << counter << ", invalid counter: " << invalid_counter << std::endl;
     out.close();
 }
 
@@ -72,6 +84,10 @@ int main(int argc, char* argv[]) {
         std::cout << "mongodb connected ok" << std::endl;
 
         bool is_mongos = isMongos(c);
+        std::stringstream ss;
+        ss << FLAGS_db << '.' << FLAGS_collection;
+        std::string ns = ss.str();
+        int total_count = c.count(ns);
 
         if (is_mongos) {
             std::cout << "mongos" << std::endl;
@@ -97,13 +113,15 @@ int main(int argc, char* argv[]) {
                 threads.add_thread(new boost::thread(dump_mongod, shard_uri));
             }
 
-            boost::thread t(dump_writer);
+            boost::thread t(dump_writer, total_count);
             threads.join_all();
+            t.join();
         } else {
             std::cout << "mongod" << std::endl;
             boost::thread t(dump_mongod, FLAGS_mongodb);
-            boost::thread w(dump_writer);
+            boost::thread w(dump_writer, total_count);
             t.join();
+            w.join();
         }
 
         std::cout << "config.shards count:" << c.count("config.shards") << std::endl;
