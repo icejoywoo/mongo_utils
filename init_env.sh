@@ -97,7 +97,39 @@ function build_libevent()
     return 0
 }
 
+function build_libev()
+{
+    FLAG="${CURRENT_DIR}/.build_libev"
+    if [ -f "${FLAG}" ]; then
+        echo "libev is already build."
+        return 0
+    fi
+
+    BUILD_PATH="${ENV_PATH}/libev-4.20"
+    if [ -d "${BUILD_PATH}" ]; then
+        rm -rf ${BUILD_PATH}
+    fi
+
+    INSTALL_PATH="${CURRENT_DIR}/third_party/libev"
+    if [ -d "${INSTALL_PATH}" ]; then
+        rm -rf ${INSTALL_PATH}
+    fi
+
+    tar xzf "${ENV_PATH}/libev-4.20.tar.gz" -C "${ENV_PATH}"
+
+    cd ${BUILD_PATH}
+    ./configure --prefix=${INSTALL_PATH} --disable-shared --enable-static
+    make -j ${PARALLEL}
+    make install
+
+    touch ${FLAG}
+    return 0
+}
+
+
+
 build_boost
 build_mongo_cxx_driver
 build_libevent
+build_libev
 

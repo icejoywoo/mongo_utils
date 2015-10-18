@@ -18,7 +18,6 @@ env.SConscript(['third_party/gmock/SConscript',
                 'third_party/gtest/SConscript',
                 'third_party/gflags/SConscript',
                 'third_party/glog/SConscript',
-                'third_party/libev/SConscript',
                 'third_party/yaml-cpp-0.5.1/SConscript'])
 
 env.Append(LIBS=['pthread', 'gtest', 'gtest_main', 'glog', 'gflags', 'mongoclient', 'yaml',
