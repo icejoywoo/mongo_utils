@@ -3,6 +3,7 @@
  * @brief: dump shard集群(不支持replica set)的数据, 从mongos中dump的速度非常慢, 针对mongo 2.6
  */
 
+#include <cstring>
 #include <fstream>
 #include <map>
 #include <sstream>
@@ -12,6 +13,7 @@
 #include "blocking_queue.h"
 #include "boost/atomic.hpp"
 #include "boost/bind.hpp"
+#include "boost/shared_ptr.hpp"
 #include "boost/thread.hpp"
 #include "gflags/gflags.h"
 #include "mongo/bson/bson.h"
@@ -21,7 +23,7 @@
 DEFINE_string(mongodb, "localhost:27017", "mongodb uri");
 DEFINE_string(db, "config", "db");
 DEFINE_string(collection, "shards", "collection");
-DEFINE_string(output, "output.dump", "output file");
+DEFINE_string(output, "output.bson", "output file");
 
 bool isMongos(mongo::DBClientConnection& mongo) {
     mongo::BSONObj ret;
@@ -34,7 +36,7 @@ bool isMongos(mongo::DBClientConnection& mongo) {
     }
 }
 
-base::BoundedBlockingQueue<mongo::BSONObj> q(10000);
+base::BoundedBlockingQueue<mongo::BSONObj*> q(10000);
 
 void dump_mongod(const std::string& mongo_uri) {
     mongo::DBClientConnection mongo;
@@ -48,7 +50,10 @@ void dump_mongod(const std::string& mongo_uri) {
     std::auto_ptr<mongo::DBClientCursor> cursor = mongo.query(ns, mongo::BSONObj());
     while (cursor->more()) {
         mongo::BSONObj d = cursor->next();
-        q.put(d);
+        // 单独申请一块buffer存bsonobj的数据
+        char* buffer = new char[d.objsize()];
+        memcpy(buffer, d.objdata(), d.objsize());
+        q.put(new mongo::BSONObj(buffer));
     }
 }
 
@@ -58,12 +63,15 @@ void dump_writer(int total) {
     int counter = 0;
     int invalid_counter = 0;
     while (counter < total) {
-        mongo::BSONObj d = q.take();
-        if (d.isValid()) {
-            out.write(d.objdata(), d.objsize());
+        mongo::BSONObj* d = q.take();
+        if (d->isValid()) {
+            out.write(d->objdata(), d->objsize());
         } else {
             ++invalid_counter;
         }
+        // 删除之前申请的存放bsonobj数据的内存
+        delete d->objdata();
+        delete d;
         ++counter;
     }
     std::cout << "counter: " << counter << ", invalid counter: " << invalid_counter << std::endl;
