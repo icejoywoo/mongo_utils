@@ -7,7 +7,11 @@
 #include <map>
 #include <sstream>
 #include <string>
+#include <vector>
 
+#include "blocking_queue.h"
+#include "boost/bind.hpp"
+#include "boost/thread.hpp"
 #include "gflags/gflags.h"
 #include "mongo/bson/bson.h"
 #include "mongo/client/dbclient.h" // for the driver
@@ -28,7 +32,12 @@ bool isMongos(mongo::DBClientConnection& mongo) {
     }
 }
 
-void dump_mongod(mongo::DBClientConnection& mongo, std::fstream& out) {
+base::BoundedBlockingQueue<mongo::BSONObj> q(10000);
+
+void dump_mongod(const std::string& mongo_uri) {
+    mongo::DBClientConnection mongo;
+    mongo.connect(mongo_uri);
+
     std::stringstream ss;
     ss << FLAGS_db << '.' << FLAGS_collection;
     std::string ns = ss.str();
@@ -36,8 +45,17 @@ void dump_mongod(mongo::DBClientConnection& mongo, std::fstream& out) {
     std::auto_ptr<mongo::DBClientCursor> cursor = mongo.query(ns, mongo::BSONObj());
     while (cursor->more()) {
         mongo::BSONObj d = cursor->next();
+        q.put(d);
+    }
+}
+
+void dump_writer() {
+    std::fstream out(FLAGS_output.c_str(), std::fstream::out | std::fstream::binary);
+    while (true) {
+        mongo::BSONObj d = q.take();
         out.write(d.objdata(), d.objsize());
     }
+    out.close();
 }
 
 int main(int argc, char* argv[]) {
@@ -68,24 +86,28 @@ int main(int argc, char* argv[]) {
                 std::string shard_mongo = d.getStringField("host");
                 shards[shard_name] = shard_mongo;
             }
-
-            std::fstream out(FLAGS_output.c_str(), std::fstream::out | std::fstream::binary);
+            std::vector<boost::thread> threads;
             for (std::map<std::string, std::string>::iterator it = shards.begin();
                  it != shards.end(); ++it) {
                 std::string shard_name = it->first;
                 std::string shard_uri = it->second;
 
-                mongo::DBClientConnection shard;
-                shard.connect(shard_uri);
                 std::cout << "dump " << shard_uri << std::endl;
-                dump_mongod(shard, out);
+                boost::thread t(dump_mongod, shard_uri);
+                threads.push_back(t);
             }
-            out.close();
+
+            boost::thread t(dump_writer);
+
+            for (std::vector<boost::thread>::iterator it = threads.begin();
+                 it != threads.end(); ++it) {
+                it->join();
+            }
         } else {
             std::cout << "mongod" << std::endl;
-            std::fstream out(FLAGS_output.c_str(), std::fstream::out | std::fstream::binary);
-            dump_mongod(c, out);
-            out.close();
+            boost::thread t(dump_mongod, FLAGS_mongodb);
+            boost::thread w(dump_writer);
+            t.join();
         }
 
         std::cout << "config.shards count:" << c.count("config.shards") << std::endl;
