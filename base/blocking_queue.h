@@ -93,23 +93,6 @@ public:
         return front;
     }
 
-    // added by Eric
-    int take(int seconds, T& item) {
-        MutexLockGuard lock(mutex_);
-        if (queue_.empty()) {
-            notEmpty_.Wait(seconds);
-            if (queue_.empty()) {
-                return -1;
-            }
-        }
-        assert(!queue_.empty());
-        T front(queue_.front());
-        queue_.pop_front();
-        notFull_.Notify();
-        item = front;
-        return 0;
-    }
-
     bool empty() const {
         MutexLockGuard lock(mutex_);
         return queue_.empty();
