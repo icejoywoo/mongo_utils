@@ -3,10 +3,12 @@
 #ifndef LOG_REPLAYER_BLOCKING_QUEUE_H
 #define LOG_REPLAYER_BLOCKING_QUEUE_H
 
-#include <boost/circular_buffer.hpp>
 #include <deque>
 #include <string>
 #include <vector>
+
+#include "boost/circular_buffer.hpp"
+#include "boost/noncopyable.hpp"
 
 #include "mutex.h"
 
@@ -14,7 +16,7 @@ namespace base {
 
 /// copy from muduo
 template<typename T>
-class BlockingQueue
+class BlockingQueue : public boost::noncopyable
 {
 public:
     BlockingQueue()
@@ -118,10 +120,6 @@ private:
     Condition                  notEmpty_;
     Condition                  notFull_;
     boost::circular_buffer<T>  queue_;
-
-    // noncopyable
-    BoundedBlockingQueue(const BoundedBlockingQueue&);
-    const BoundedBlockingQueue& operator=(const BoundedBlockingQueue&);
 };
 
 } // end replayer namespace

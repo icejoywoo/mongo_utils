@@ -36,7 +36,7 @@ bool isMongos(mongo::DBClientConnection& mongo) {
     }
 }
 
-base::BoundedBlockingQueue<mongo::BSONObj*> q(10000);
+base::BoundedBlockingQueue<boost::shared_ptr<mongo::BSONObj> > q(10000);
 
 void dump_mongod(const std::string& mongo_uri) {
     mongo::DBClientConnection mongo;
@@ -53,7 +53,7 @@ void dump_mongod(const std::string& mongo_uri) {
         // 单独申请一块buffer存bsonobj的数据
         char* buffer = new char[d.objsize()];
         memcpy(buffer, d.objdata(), d.objsize());
-        q.put(new mongo::BSONObj(buffer));
+        q.put(boost::shared_ptr<mongo::BSONObj>(new mongo::BSONObj(buffer)));
     }
 }
 
@@ -63,7 +63,7 @@ void dump_writer(int total) {
     int counter = 0;
     int invalid_counter = 0;
     while (counter < total) {
-        mongo::BSONObj* d = q.take();
+        boost::shared_ptr<mongo::BSONObj> d = q.take();
         if (d->isValid()) {
             out.write(d->objdata(), d->objsize());
         } else {
@@ -71,7 +71,6 @@ void dump_writer(int total) {
         }
         // 删除之前申请的存放bsonobj数据的内存
         delete d->objdata();
-        delete d;
         ++counter;
     }
     std::cout << "counter: " << counter << ", invalid counter: " << invalid_counter << std::endl;
