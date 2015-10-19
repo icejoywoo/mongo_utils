@@ -1,0 +1,20 @@
+#!/bin/env python
+
+import os
+
+env = Environment(CC="gcc", CXX="g++", CXXFLAGS=["-g", "-O0", "-isystem", "-c"], CFLAGS=["-g", "-O0"])
+
+env.Append(CPPPATH=['include', '.'])
+env.Append(LIBS=['pthread', 'dl'])
+env.Append(LIBPATH=[])
+
+env.Object(Glob("src/*.c"))
+
+env.StaticLibrary(target='sqlite3',
+                  source=Glob('src/sqlite3.o'))
+
+env.Program(target='shell',
+            source=Glob('src/*.o'))
+
+for lib in Glob("*.a"):
+    env.Command('lib/' + lib.name, lib.name, Move("$TARGET", "$SOURCE"))
