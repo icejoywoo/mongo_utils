@@ -13,17 +13,13 @@
 #include "blocking_queue.h"
 #include "boost/atomic.hpp"
 #include "boost/bind.hpp"
+#include "boost/program_options.hpp"
 #include "boost/shared_ptr.hpp"
 #include "boost/thread.hpp"
-#include "gflags/gflags.h"
 #include "mongo/bson/bson.h"
 #include "mongo/bson/bsonelement.h"
 #include "mongo/client/dbclient.h" // for the driver
 
-DEFINE_string(mongodb, "localhost:27017", "mongodb uri");
-DEFINE_string(db, "config", "db");
-DEFINE_string(collection, "shards", "collection");
-DEFINE_string(output, "output.bson", "output file");
 
 bool isMongos(mongo::DBClientConnection& mongo) {
     mongo::BSONObj ret;
@@ -38,13 +34,9 @@ bool isMongos(mongo::DBClientConnection& mongo) {
 
 base::BoundedBlockingQueue<boost::shared_ptr<mongo::BSONObj> > q(10000);
 
-void dump_mongod(const std::string& mongo_uri) {
+void dump_mongod(const std::string& mongo_uri, const std::string& ns) {
     mongo::DBClientConnection mongo;
     mongo.connect(mongo_uri);
-
-    std::stringstream ss;
-    ss << FLAGS_db << '.' << FLAGS_collection;
-    std::string ns = ss.str();
 
     std::cout << "dump " << mongo_uri << std::endl;
     std::auto_ptr<mongo::DBClientCursor> cursor = mongo.query(ns, mongo::BSONObj());
@@ -57,8 +49,8 @@ void dump_mongod(const std::string& mongo_uri) {
     }
 }
 
-void dump_writer(int total) {
-    std::fstream out(FLAGS_output.c_str(), std::fstream::out | std::fstream::binary);
+void dump_writer(int total, const std::string& output) {
+    std::fstream out(output.c_str(), std::fstream::out | std::fstream::binary);
     std::cout << "dump writer " << std::endl;
     int counter = 0;
     int invalid_counter = 0;
@@ -78,21 +70,65 @@ void dump_writer(int total) {
 }
 
 int main(int argc, char* argv[]) {
-    gflags::ParseCommandLineFlags(&argc, &argv, true);
+    namespace po = boost::program_options;
+    po::options_description desc("Usage: dump mongodb data.\nAllowed options");
+    desc.add_options()
+            ("help", "produce help message")
+            ("host,h", po::value<std::string>()->default_value("localhost"), "mongodb host to connect to (setname/host1,host2 for replica sets)")
+            ("port,p", po::value<int>()->default_value(27017), "server port (can also use --host hostname:port)")
+            ("db,d", po::value<std::string>(), "database to use")
+            ("collection,c", po::value<std::string>(), "collection to use")
+            ("out,o", po::value<std::string>()->default_value("dump.bson"), "output file (defaults to 'dump.bson')")
+    ;
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::notify(vm);
     mongo::client::initialize();
 
-    std::cout << "mongodb: " << FLAGS_mongodb << std::endl
-              << "db: " << FLAGS_db << std::endl
-              << "collection: " << FLAGS_collection << std::endl;
+    if (vm.count("help")) {
+        std::cout << desc << std::endl;
+        return 1;
+    }
+
+    std::string host = vm["host"].as<std::string>();
+    int port = vm["port"].as<int>();
+    std::string db;
+    if (vm.count("db")) {
+        db = vm["db"].as<std::string>();
+    } else {
+        std::cerr << "db must be set." << std::endl;
+        return 1;
+    }
+    std::string collection;
+    if (vm.count("collection")) {
+        collection = vm["collection"].as<std::string>();
+    } else {
+        std::cerr << "collection must be set." << std::endl;
+        return 1;
+    }
+    std::string out = vm["out"].as<std::string>();
+
+    std::string mongodb;
+    if (host.find(':') != -1) {
+        mongodb = host;
+    } else {
+        std::stringstream ss;
+        ss << host << ':' << port;
+        mongodb = ss.str();
+    }
+
+    std::cout << "mongodb: " << mongodb << std::endl
+              << "db: " << db << std::endl
+              << "collection: " << collection << std::endl;
 
     try {
         mongo::DBClientConnection c;
-        c.connect(FLAGS_mongodb);
+        c.connect(mongodb);
         std::cout << "mongodb connected ok" << std::endl;
 
         bool is_mongos = isMongos(c);
         std::stringstream ss;
-        ss << FLAGS_db << '.' << FLAGS_collection;
+        ss << db << '.' << collection;
         std::string ns = ss.str();
         int total_count = c.count(ns);
 
@@ -117,16 +153,16 @@ int main(int argc, char* argv[]) {
                 std::string shard_uri = it->second;
 
                 std::cout << "dump " << shard_uri << std::endl;
-                threads.add_thread(new boost::thread(dump_mongod, shard_uri));
+                threads.add_thread(new boost::thread(dump_mongod, shard_uri, ns));
             }
 
-            boost::thread t(dump_writer, total_count);
+            boost::thread t(dump_writer, total_count, out);
             threads.join_all();
             t.join();
         } else {
             std::cout << "mongod" << std::endl;
-            boost::thread t(dump_mongod, FLAGS_mongodb);
-            boost::thread w(dump_writer, total_count);
+            boost::thread t(dump_mongod, mongodb, ns);
+            boost::thread w(dump_writer, total_count, out);
             t.join();
             w.join();
         }

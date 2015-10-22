@@ -22,7 +22,7 @@ env.SConscript(['third_party/gmock/SConscript',
                 'third_party/yaml-cpp-0.5.1/SConscript'])
 
 env.Append(LIBS=['pthread', 'gtest', 'gtest_main', 'glog', 'gflags', 'mongoclient', 'yaml',
-                 'boost_thread-mt', 'boost_system', 'boost_regex'])
+                 'boost_thread-mt', 'boost_system', 'boost_regex', 'boost_program_options'])
 env.Append(LIBPATH=['third_party/gtest/lib', 'third_party/gmock/lib',
                     'third_party/glog/lib', 'third_party/gflags/lib',
                     'third_party/boost/lib', 'third_party/mongo-cxx/lib',
