@@ -97,6 +97,7 @@ int main(int argc, char* argv[]) {
         db = vm["db"].as<std::string>();
     } else {
         std::cerr << "db must be set." << std::endl;
+        std::cerr << desc << std::endl;
         return 1;
     }
     std::string collection;
@@ -104,12 +105,13 @@ int main(int argc, char* argv[]) {
         collection = vm["collection"].as<std::string>();
     } else {
         std::cerr << "collection must be set." << std::endl;
+        std::cerr << desc << std::endl;
         return 1;
     }
     std::string out = vm["out"].as<std::string>();
 
     std::string mongodb;
-    if (host.find(':') != -1) {
+    if (host.find(':') != std::string::npos) {
         mongodb = host;
     } else {
         std::stringstream ss;
