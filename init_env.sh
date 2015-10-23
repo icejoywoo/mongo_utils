@@ -90,8 +90,6 @@ function build_libevent()
 
     cd ${LIBEVENT_PATH}
     ./configure --prefix=${LIBEVENT_RELEASE_PATH} --disable-shared --enable-static --disable-openssl
-    # 修改版本号
-    sed -i 's/#define VERSION "2.0.22-stable"/#define VERSION "2.0"/g' config.h
     make -j ${PARALLEL}
     make install
 
@@ -128,17 +126,48 @@ function build_libev()
     return 0
 }
 
+function build_libevent1()
+{
+    # 为了thrift的TNonblockingServer
+    FLAG="${CURRENT_DIR}/.build_libevent1"
+    if [ -f "${FLAG}" ]; then
+        echo "libevent1 is already build."
+        return 0
+    fi
+    # libevent
+    LIBEVENT_PATH="${ENV_PATH}/libevent-1.4.14b-stable"
+    if [ -d "${LIBEVENT_PATH}" ]; then
+        rm -rf ${LIBEVENT_PATH}
+    fi
+
+    LIBEVENT_RELEASE_PATH="${CURRENT_DIR}/third_party/libevent1"
+    if [ -d "${LIBEVENT_RELEASE_PATH}" ]; then
+        rm -rf ${LIBEVENT_RELEASE_PATH}
+    fi
+
+    tar xzf "${ENV_PATH}/libevent-1.4.14b-stable.tar.gz" -C "${ENV_PATH}"
+
+    cd ${LIBEVENT_PATH}
+    ./configure --prefix=${LIBEVENT_RELEASE_PATH} --disable-shared --enable-static --disable-openssl
+    make -j ${PARALLEL}
+    make install
+
+    touch ${FLAG}
+    return 0
+}
+
 function build_thrift()
 {
     # mac 下无法编译
     NAME="thrift"
+    VERSION="0.9.3"
     FLAG="${CURRENT_DIR}/.build_${NAME}"
     if [ -f "${FLAG}" ]; then
         echo "${NAME} is already build."
         return 0
     fi
 
-    BUILD_PATH="${ENV_PATH}/thrift-0.9.3"
+    BUILD_PATH="${ENV_PATH}/thrift-${VERSION}"
     if [ -d "${BUILD_PATH}" ]; then
         rm -rf ${BUILD_PATH}
     fi
@@ -148,11 +177,11 @@ function build_thrift()
         rm -rf ${INSTALL_PATH}
     fi
 
-    tar xzf "${ENV_PATH}/thrift-0.9.3.tar.gz" -C "${ENV_PATH}"
+    tar xzf "${ENV_PATH}/thrift-${VERSION}.tar.gz" -C "${ENV_PATH}"
 
     cd ${BUILD_PATH}
     ./bootstrap.sh
-    /configure --prefix=${INSTALL_PATH} --with-boost=${CURRENT_DIR}/third_party/boost/ --with-libevent=${CURRENT_DIR}/third_party/libevent/ \
+    ./configure --prefix=${INSTALL_PATH} --with-boost=${CURRENT_DIR}/third_party/boost/ --with-libevent=${CURRENT_DIR}/third_party/libevent1/ \
         --without-go --without-nodejs --with-cpp --without-tests --enable-static --disable-shared
     make -j ${PARALLEL}
     make install
@@ -165,5 +194,6 @@ build_boost
 build_mongo_cxx_driver
 build_libevent
 build_libev
+build_libevent1
 build_thrift
 
