@@ -128,10 +128,42 @@ function build_libev()
     return 0
 }
 
+function build_thrift()
+{
+    # mac 下无法编译
+    NAME="thrift"
+    FLAG="${CURRENT_DIR}/.build_${NAME}"
+    if [ -f "${FLAG}" ]; then
+        echo "${NAME} is already build."
+        return 0
+    fi
 
+    BUILD_PATH="${ENV_PATH}/thrift-0.9.3"
+    if [ -d "${BUILD_PATH}" ]; then
+        rm -rf ${BUILD_PATH}
+    fi
+
+    INSTALL_PATH="${CURRENT_DIR}/third_party/thrift"
+    if [ -d "${INSTALL_PATH}" ]; then
+        rm -rf ${INSTALL_PATH}
+    fi
+
+    tar xzf "${ENV_PATH}/thrift-0.9.3.tar.gz" -C "${ENV_PATH}"
+
+    cd ${BUILD_PATH}
+    ./bootstrap.sh
+    /configure --prefix=${INSTALL_PATH} --with-boost=${CURRENT_DIR}/third_party/boost/ --with-libevent=${CURRENT_DIR}/third_party/libevent/ \
+        --without-go --without-nodejs --with-cpp --without-tests --enable-static --disable-shared
+    make -j ${PARALLEL}
+    make install
+
+    touch ${FLAG}
+    return 0
+}
 
 build_boost
 build_mongo_cxx_driver
 build_libevent
 build_libev
+build_thrift
 
