@@ -90,6 +90,8 @@ function build_libevent()
 
     cd ${LIBEVENT_PATH}
     ./configure --prefix=${LIBEVENT_RELEASE_PATH} --disable-shared --enable-static --disable-openssl
+    # 修改版本号
+    sed -i 's/#define VERSION "2.0.22-stable"/#define VERSION "2.0"/g' config.h
     make -j ${PARALLEL}
     make install
 
