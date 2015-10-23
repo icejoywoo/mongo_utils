@@ -54,15 +54,11 @@ private:
     mutable MutexLock mutex_;
     Condition         notEmpty_;
     std::deque<T>     queue_;
-
-    // noncopyable
-    BlockingQueue(const BlockingQueue&);
-    const BlockingQueue& operator=(const BlockingQueue&);
 };
 
 /// copy from muduo
 template<typename T>
-class BoundedBlockingQueue
+class BoundedBlockingQueue : public boost::noncopyable
 {
 public:
     explicit BoundedBlockingQueue(int maxSize)
