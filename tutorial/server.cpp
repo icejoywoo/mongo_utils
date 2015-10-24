@@ -46,11 +46,15 @@ using namespace apache::thrift::server;
 using namespace tutorial;
 using namespace shared;
 
+// CalculatorIf的if是interface的缩写
 class CalculatorHandler : public CalculatorIf {
 public:
   CalculatorHandler() {}
 
-  void ping() { cout << "ping()" << endl; }
+  void ping(std::string& _return) {
+      cout << "ping()" << endl;
+      _return = "pong";
+  }
 
   int32_t add(const int32_t n1, const int32_t n2) {
     cout << "add(" << n1 << ", " << n2 << ")" << endl;

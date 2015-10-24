@@ -29,7 +29,7 @@ class CalculatorIf : virtual public  ::shared::SharedServiceIf {
    * lists and exception lists are specified using the exact same syntax as
    * field lists in struct or exception definitions.
    */
-  virtual void ping() = 0;
+  virtual void ping(std::string& _return) = 0;
   virtual int32_t add(const int32_t num1, const int32_t num2) = 0;
   virtual int32_t calculate(const int32_t logid, const Work& w) = 0;
 
@@ -68,7 +68,7 @@ class CalculatorIfSingletonFactory : virtual public CalculatorIfFactory {
 class CalculatorNull : virtual public CalculatorIf , virtual public  ::shared::SharedServiceNull {
  public:
   virtual ~CalculatorNull() {}
-  void ping() {
+  void ping(std::string& /* _return */) {
     return;
   }
   int32_t add(const int32_t /* num1 */, const int32_t /* num2 */) {
@@ -121,19 +121,30 @@ class Calculator_ping_pargs {
 
 };
 
+typedef struct _Calculator_ping_result__isset {
+  _Calculator_ping_result__isset() : success(false) {}
+  bool success :1;
+} _Calculator_ping_result__isset;
 
 class Calculator_ping_result {
  public:
 
   Calculator_ping_result(const Calculator_ping_result&);
   Calculator_ping_result& operator=(const Calculator_ping_result&);
-  Calculator_ping_result() {
+  Calculator_ping_result() : success() {
   }
 
   virtual ~Calculator_ping_result() throw();
+  std::string success;
 
-  bool operator == (const Calculator_ping_result & /* rhs */) const
+  _Calculator_ping_result__isset __isset;
+
+  void __set_success(const std::string& val);
+
+  bool operator == (const Calculator_ping_result & rhs) const
   {
+    if (!(success == rhs.success))
+      return false;
     return true;
   }
   bool operator != (const Calculator_ping_result &rhs) const {
@@ -147,12 +158,19 @@ class Calculator_ping_result {
 
 };
 
+typedef struct _Calculator_ping_presult__isset {
+  _Calculator_ping_presult__isset() : success(false) {}
+  bool success :1;
+} _Calculator_ping_presult__isset;
 
 class Calculator_ping_presult {
  public:
 
 
   virtual ~Calculator_ping_presult() throw();
+  std::string* success;
+
+  _Calculator_ping_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -436,9 +454,9 @@ class CalculatorClient : virtual public CalculatorIf, public  ::shared::SharedSe
   boost::shared_ptr< ::apache::thrift::protocol::TProtocol> getOutputProtocol() {
     return poprot_;
   }
-  void ping();
+  void ping(std::string& _return);
   void send_ping();
-  void recv_ping();
+  void recv_ping(std::string& _return);
   int32_t add(const int32_t num1, const int32_t num2);
   void send_add(const int32_t num1, const int32_t num2);
   int32_t recv_add();
@@ -502,13 +520,14 @@ class CalculatorMultiface : virtual public CalculatorIf, public  ::shared::Share
     ifaces_.push_back(iface);
   }
  public:
-  void ping() {
+  void ping(std::string& _return) {
     size_t sz = ifaces_.size();
     size_t i = 0;
     for (; i < (sz - 1); ++i) {
-      ifaces_[i]->ping();
+      ifaces_[i]->ping(_return);
     }
-    ifaces_[i]->ping();
+    ifaces_[i]->ping(_return);
+    return;
   }
 
   int32_t add(const int32_t num1, const int32_t num2) {
@@ -554,9 +573,9 @@ class CalculatorConcurrentClient : virtual public CalculatorIf, public  ::shared
   boost::shared_ptr< ::apache::thrift::protocol::TProtocol> getOutputProtocol() {
     return poprot_;
   }
-  void ping();
+  void ping(std::string& _return);
   int32_t send_ping();
-  void recv_ping(const int32_t seqid);
+  void recv_ping(std::string& _return, const int32_t seqid);
   int32_t add(const int32_t num1, const int32_t num2);
   int32_t send_add(const int32_t num1, const int32_t num2);
   int32_t recv_add(const int32_t seqid);

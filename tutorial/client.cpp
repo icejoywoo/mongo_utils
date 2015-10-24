@@ -23,8 +23,9 @@ int main() {
   try {
     transport->open();
 
-    client.ping();
-    cout << "ping()" << endl;
+    std::string ret;
+    client.ping(ret);
+    cout << "ping(): " << ret << endl;
 
     cout << "1 + 1 = " << client.add(1, 1) << endl;
 

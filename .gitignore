@@ -36,3 +36,12 @@
 
 # Debug files
 *.dSYM/
+
+# scons
+*.dblite
+
+# vim
+*.swp
+
+# build_placement
+.build_*

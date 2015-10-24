@@ -190,10 +190,43 @@ function build_thrift()
     return 0
 }
 
+function build_poco()
+{
+    # mac 下无法编译
+    NAME="poco"
+    VERSION="1.6.1"
+    FLAG="${CURRENT_DIR}/.build_${NAME}"
+    if [ -f "${FLAG}" ]; then
+        echo "${NAME} is already build."
+        return 0
+    fi
+
+    BUILD_PATH="${ENV_PATH}/${NAME}-${VERSION}"
+    if [ -d "${BUILD_PATH}" ]; then
+        rm -rf ${BUILD_PATH}
+    fi
+
+    INSTALL_PATH="${CURRENT_DIR}/third_party/${NAME}"
+    if [ -d "${INSTALL_PATH}" ]; then
+        rm -rf ${INSTALL_PATH}
+    fi
+
+    tar xzf "${ENV_PATH}/${NAME}-${VERSION}.tar.gz" -C "${ENV_PATH}"
+
+    cd ${BUILD_PATH}
+    ./configure --prefix=${INSTALL_PATH} --static --no-tests --no-samples
+    make -j ${PARALLEL}
+    make install
+
+    touch ${FLAG}
+    return 0
+}
+
 build_boost
 build_mongo_cxx_driver
 build_libevent
 build_libev
 build_libevent1
 build_thrift
+build_poco
 

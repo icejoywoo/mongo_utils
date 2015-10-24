@@ -90,7 +90,20 @@ uint32_t Calculator_ping_result::read(::apache::thrift::protocol::TProtocol* ipr
     if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
-    xfer += iprot->skip(ftype);
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->success);
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
     xfer += iprot->readFieldEnd();
   }
 
@@ -105,6 +118,11 @@ uint32_t Calculator_ping_result::write(::apache::thrift::protocol::TProtocol* op
 
   xfer += oprot->writeStructBegin("Calculator_ping_result");
 
+  if (this->__isset.success) {
+    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_STRING, 0);
+    xfer += oprot->writeString(this->success);
+    xfer += oprot->writeFieldEnd();
+  }
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   return xfer;
@@ -134,7 +152,20 @@ uint32_t Calculator_ping_presult::read(::apache::thrift::protocol::TProtocol* ip
     if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
-    xfer += iprot->skip(ftype);
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString((*(this->success)));
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
     xfer += iprot->readFieldEnd();
   }
 
@@ -627,10 +658,10 @@ uint32_t Calculator_zip_pargs::write(::apache::thrift::protocol::TProtocol* opro
   return xfer;
 }
 
-void CalculatorClient::ping()
+void CalculatorClient::ping(std::string& _return)
 {
   send_ping();
-  recv_ping();
+  recv_ping(_return);
 }
 
 void CalculatorClient::send_ping()
@@ -646,7 +677,7 @@ void CalculatorClient::send_ping()
   oprot_->getTransport()->flush();
 }
 
-void CalculatorClient::recv_ping()
+void CalculatorClient::recv_ping(std::string& _return)
 {
 
   int32_t rseqid = 0;
@@ -672,11 +703,16 @@ void CalculatorClient::recv_ping()
     iprot_->getTransport()->readEnd();
   }
   Calculator_ping_presult result;
+  result.success = &_return;
   result.read(iprot_);
   iprot_->readMessageEnd();
   iprot_->getTransport()->readEnd();
 
-  return;
+  if (result.__isset.success) {
+    // _return pointer has now been filled
+    return;
+  }
+  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "ping failed: unknown result");
 }
 
 int32_t CalculatorClient::add(const int32_t num1, const int32_t num2)
@@ -851,7 +887,8 @@ void CalculatorProcessor::process_ping(int32_t seqid, ::apache::thrift::protocol
 
   Calculator_ping_result result;
   try {
-    iface_->ping();
+    iface_->ping(result.success);
+    result.__isset.success = true;
   } catch (const std::exception& e) {
     if (this->eventHandler_.get() != NULL) {
       this->eventHandler_->handlerError(ctx, "Calculator.ping");
@@ -1036,10 +1073,10 @@ void CalculatorProcessor::process_zip(int32_t, ::apache::thrift::protocol::TProt
   return processor;
 }
 
-void CalculatorConcurrentClient::ping()
+void CalculatorConcurrentClient::ping(std::string& _return)
 {
   int32_t seqid = send_ping();
-  recv_ping(seqid);
+  recv_ping(_return, seqid);
 }
 
 int32_t CalculatorConcurrentClient::send_ping()
@@ -1059,7 +1096,7 @@ int32_t CalculatorConcurrentClient::send_ping()
   return cseqid;
 }
 
-void CalculatorConcurrentClient::recv_ping(const int32_t seqid)
+void CalculatorConcurrentClient::recv_ping(std::string& _return, const int32_t seqid)
 {
 
   int32_t rseqid = 0;
@@ -1098,12 +1135,18 @@ void CalculatorConcurrentClient::recv_ping(const int32_t seqid)
         throw TProtocolException(TProtocolException::INVALID_DATA);
       }
       Calculator_ping_presult result;
+      result.success = &_return;
       result.read(iprot_);
       iprot_->readMessageEnd();
       iprot_->getTransport()->readEnd();
 
-      sentry.commit();
-      return;
+      if (result.__isset.success) {
+        // _return pointer has now been filled
+        sentry.commit();
+        return;
+      }
+      // in a bad state, don't commit
+      throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "ping failed: unknown result");
     }
     // seqid != rseqid
     this->sync_.updatePending(fname, mtype, rseqid);
