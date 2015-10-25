@@ -192,7 +192,6 @@ function build_thrift()
 
 function build_poco()
 {
-    # mac 下无法编译
     NAME="poco"
     VERSION="1.6.1"
     FLAG="${CURRENT_DIR}/.build_${NAME}"
