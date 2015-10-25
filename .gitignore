@@ -45,3 +45,6 @@
 
 # build_placement
 .build_*
+
+# py
+*.pyc
