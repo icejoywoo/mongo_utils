@@ -69,6 +69,9 @@ class IPLib {
         }
 
         int GetCountry(const std::string& ip, std::string& country) {
+            if (m_ip_table.empty()) {
+                return -2;
+            }
             uint64_t ip_int = ip2int(ip);
             size_t floor = 0;
             size_t ceil = m_ip_table.size() - 1;
@@ -90,6 +93,7 @@ class IPLib {
         }
 
         void CleanUp() {
+            m_ip_table.clear();
             IPTable(m_ip_table).swap(m_ip_table);
         }
 

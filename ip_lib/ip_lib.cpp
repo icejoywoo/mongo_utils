@@ -44,7 +44,12 @@ static PyObject* get_country_function(PyObject *self, PyObject *args) {
     const char* _ip = PyString_AsString(ip);
     ip_lib.GetCountry(_ip, country);
 
-    return Py_BuildValue("s", country.c_str());
+    if (country.empty()) {
+        Py_INCREF(Py_None);
+        return Py_None;
+    } else {
+        return Py_BuildValue("s", country.c_str());
+    }
 }
 
 static PyObject* cleanup_function(PyObject *self, PyObject *args) {
