@@ -51,7 +51,6 @@ IP2Location_init(IP2Location* self, PyObject* args, PyObject* kwds) {
         char* _dict_path = PyString_AsString(dict_path);
         FILE* f = fopen(_dict_path, "r");
         char buf[1024];
-        PyObject* line;
         PyObject* arglist;
         PyObject* result;
 
