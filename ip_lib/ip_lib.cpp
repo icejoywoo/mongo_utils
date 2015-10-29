@@ -28,10 +28,11 @@ IP2Location_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
 static int
 IP2Location_init(IP2Location* self, PyObject* args, PyObject* kwds) {
     PyObject* dict_path = NULL;
+    PyObject* callback = NULL;
 
-    static char* kwlist[] = {"dict_path", NULL};
+    static char* kwlist[] = {"dict_path", "callback", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O", kwlist, &dict_path)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O", kwlist, &dict_path, &callback)) {
         return -1;
     }
 
@@ -41,9 +42,37 @@ IP2Location_init(IP2Location* self, PyObject* args, PyObject* kwds) {
         return -1;
     }
 
-    char* _dict_path = PyString_AsString(dict_path);
-    printf("loading dict: %s\n", _dict_path);
-    self->ip_lib->LoadDict(_dict_path);
+    if (callback) {
+        if (!PyCallable_Check(callback)) {
+            PyErr_SetString(PyExc_TypeError,
+                            "The callback must be a function");
+            return -1;
+        }
+        char* _dict_path = PyString_AsString(dict_path);
+        FILE* f = fopen(_dict_path, "r");
+        char buf[1024];
+        PyObject* line;
+        PyObject* arglist;
+        PyObject* result;
+
+        PyObject* start;
+        PyObject* end;
+        PyObject* country;
+        while (fgets(buf, sizeof(buf), f)) {
+            arglist = Py_BuildValue("(s)", buf);
+            result = PyObject_CallObject(callback, arglist);
+            if (PyArg_ParseTuple(result, "OOO", &start, &end, &country)) {
+                char* _start = PyString_AsString(start);
+                char* _end = PyString_AsString(end);
+                char* _country = PyString_AsString(country);
+                self->ip_lib->PushItem(_start, _end, _country);
+            }
+        }
+    } else {
+        char* _dict_path = PyString_AsString(dict_path);
+        self->ip_lib->LoadDict(_dict_path);
+    }
+
     return 0;
 }
 
@@ -59,6 +88,7 @@ static PyObject *
 IP2Location_get_country(IP2Location* self, PyObject* args)
 {
     PyObject* ip = NULL;
+
     if (!PyArg_ParseTuple(args, "O", &ip)) {
         return NULL;
     }

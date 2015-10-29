@@ -93,6 +93,13 @@ class IPLib {
             return -1;
         }
 
+        void PushItem(const std::string& start, const std::string& end, const std::string& country) {
+            uint32_t _start = ip2int(start);
+            uint32_t _end = ip2int(end);
+            IPItem ip_item = {_start, _end, country};
+            m_ip_table.push_back(ip_item);
+        }
+
         void CleanUp() {
             m_ip_table.clear();
             IPTable(m_ip_table).swap(m_ip_table);
