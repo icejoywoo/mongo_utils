@@ -54,6 +54,7 @@ class IPLib {
         IPLib() {}
         ~IPLib() {}
         int LoadDict(const std::string& dict) {
+            m_ip_table.clear();
             std::ifstream fin(dict.c_str());
             std::string line;
             while (std::getline(fin, line)) {
