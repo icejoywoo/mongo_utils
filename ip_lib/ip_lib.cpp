@@ -60,12 +60,14 @@ IP2Location_init(IP2Location* self, PyObject* args, PyObject* kwds) {
         while (fgets(buf, sizeof(buf), f)) {
             arglist = Py_BuildValue("(s)", buf);
             result = PyObject_CallObject(callback, arglist);
+            Py_DECREF(arglist);
             if (PyArg_ParseTuple(result, "OOO", &start, &end, &country)) {
                 char* _start = PyString_AsString(start);
                 char* _end = PyString_AsString(end);
                 char* _country = PyString_AsString(country);
                 self->ip_lib->PushItem(_start, _end, _country);
             }
+            Py_DECREF(result);
         }
     } else {
         char* _dict_path = PyString_AsString(dict_path);
