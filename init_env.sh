@@ -34,7 +34,8 @@ function build_boost()
 
     ${BOOST_PATH}/bootstrap.sh --prefix=${BOOST_RELEASE_PATH}
 
-    ${BOOST_PATH}/b2 --build-type=complete --layout=tagged -j ${PARALLEL} link=static install
+    # cxxflags=-Wno-unused-local-typedef 屏蔽mac编译下的很多warning
+    ${BOOST_PATH}/b2 --build-type=complete --layout=tagged -j ${PARALLEL} link=static cxxflags=-Wno-unused-local-typedef install
 
     touch ${FLAG}
     return 0
