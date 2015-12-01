@@ -48,3 +48,19 @@
 
 # py
 *.pyc
+
+# ignore directories
+env/libev-4.20/
+env/libevent-1.4.14b-stable/
+env/libevent-2.0.22-stable/
+env/mongo-cxx-driver-legacy-1.0.5/
+env/poco-1.6.1/
+env/thrift-0.9.3/
+third_party/boost/
+third_party/libev/
+third_party/libevent/
+third_party/libevent1/
+third_party/mongo-cxx/
+third_party/poco/
+third_party/sqlite3/shell
+third_party/thrift/
